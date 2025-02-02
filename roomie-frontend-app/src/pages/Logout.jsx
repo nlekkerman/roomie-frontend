@@ -11,6 +11,7 @@ const Logout = () => {
 
     // Redirect to home page after successful logout
     navigate("/home");
+    window.location.reload();
   };
 
   const handleCancel = () => {

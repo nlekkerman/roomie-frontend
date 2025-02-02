@@ -19,36 +19,38 @@ const Login = () => {
     setError(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/accounts/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-      });
+        const response = await fetch("http://127.0.0.1:8000/accounts/login/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(loginData),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Login failed");
-      }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Login failed");
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      // Save JWT tokens to localStorage
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
+        // Save JWT tokens to localStorage
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
 
-      navigate("/home");  // Redirect to Home page after successful login
+        navigate("/home");  // Redirect to Home
+        window.location.reload();  // ✅ Force a reload to update navbar & state
     } catch (error) {
-      setError(error.message);
+        setError(error.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-md">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-500 danger">{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">

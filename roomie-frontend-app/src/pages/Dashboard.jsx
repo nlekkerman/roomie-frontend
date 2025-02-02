@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card } from 'react-bootstrap';
-import CashFlows from './CashFlows'; // Import the CashFlows component
 
 const Dashboard = () => {
     const [userData, setUserData] = useState(null);

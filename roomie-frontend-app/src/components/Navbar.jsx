@@ -10,7 +10,7 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/home">MyApp</Link>
+        <Link className="navbar-brand" to="/home">Roomie World</Link>
 
         {/* Toggle button (hamburger) for small screens */}
         <button

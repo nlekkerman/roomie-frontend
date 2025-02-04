@@ -10,16 +10,17 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import CashFlows from './pages/CashFlows'; 
 import DamageRepairReports from './pages/DamageRepairReports';
 import AddDamageRepairReport from './components/AddDamageRepairReport';
+import OwnersDashboard from './pages/OwnersDashboard';
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        {/* Add a redirect from the root route */}
+        {/* Redirect from root ("/") to "/home" */}
         <Route path="/" element={<Navigate to="/home" />} />
 
-        {/* Other routes */}
+        {/* Define other routes */}
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -27,7 +28,8 @@ function App() {
         <Route path="/cashflows" element={<CashFlows />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/damage-repair-reports" element={<DamageRepairReports />} />
-        <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} /> 
+        <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} />
+        <Route path="/owners-dashboard" element={<OwnersDashboard />} /> {/* Owners dashboard route */}
       </Routes>
     </Router>
   );

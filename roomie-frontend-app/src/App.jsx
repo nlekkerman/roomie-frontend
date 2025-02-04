@@ -8,6 +8,8 @@ import Logout from "./pages/Logout";
 import Navbar from "./components/Navbar";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import CashFlows from './pages/CashFlows'; 
+import DamageRepairReports from './pages/DamageRepairReports';
+import AddDamageRepairReport from './components/AddDamageRepairReport';
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cashflows" element={<CashFlows />} />
         <Route path="/logout" element={<Logout />} />
+        <Route path="/damage-repair-reports" element={<DamageRepairReports />} />
+        <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} /> 
       </Routes>
     </Router>
   );

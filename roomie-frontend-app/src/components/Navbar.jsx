@@ -52,8 +52,12 @@ const Navbar = () => {
                   <Link className="nav-link" to="/dashboard">Dashboard</Link>
                 </li>
                 <li className="nav-item">
+                  <Link className="nav-link" to="/damage-repair-reports">Repairs</Link> {/* Added Link */}
+                </li>
+                <li className="nav-item">
                   <Link className="nav-link bg-danger text-white px-4 py-2 rounded" to="/logout">Log Out</Link>
                 </li>
+                
               </>
             )}
           </ul>

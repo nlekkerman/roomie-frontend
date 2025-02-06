@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Image } from 'react-bootstrap';
+import { Container, Card, Image,Button } from 'react-bootstrap';
 
 const Dashboard = () => {
     const [userData, setUserData] = useState(null);
@@ -59,9 +59,14 @@ const Dashboard = () => {
     } = userData;
 
     return (
+
         <Container className="mt-5">
             <h2 className="text-center mb-4">Dashboard</h2>
-
+            {/* New Section: Property Profile */}
+            <div className="mt-4 text-center">
+                <h4>Are you the owner of a property? If so, create a property profile</h4>
+                <Button variant="primary" size="lg" href="/create-property">Create Property</Button>
+            </div>
             {/* Profile Image */}
             <div className="text-center mb-4">
                 {profile_image ? (

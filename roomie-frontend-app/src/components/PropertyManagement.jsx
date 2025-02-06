@@ -58,34 +58,34 @@ const PropertyManagement = () => {
       <h1 className="text-center mb-4">Properties</h1>
 
       <div className="row">
-    {/* Left Column: List of Properties */}
-    <div className="col-md-4 bg-primary">
-        <ul className="list-group">
+        {/* Left Column: List of Properties */}
+        <div className="col-md-4 bg-primary">
+          <ul className="list-group">
             {properties.map((property) => (
-                <li
-                    key={property.id}
-                    className="list-group-item list-group-item-action d-flex align-items-center"
-                    onClick={() => handleSelectProperty(property.id)}
-                    style={{ cursor: 'pointer' }}
-                >
-                    {/* ✅ Display Property Image Next to Address */}
-                    {property.main_image && (
-                        <img
-                            src={property.main_image}
-                            alt="Property Thumbnail"
-                            className="me-3"
-                            style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "8px" }}
-                        />
-                    )}
+              <li
+                key={property.id}
+                className="list-group-item list-group-item-action d-flex align-items-center"
+                onClick={() => handleSelectProperty(property.id)}
+                style={{ cursor: 'pointer' }}
+              >
+                {/* ✅ Display Property Image Next to Address */}
+                {property.main_image && (
+                  <img
+                    src={property.main_image}
+                    alt="Property Thumbnail"
+                    className="me-3"
+                    style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "8px" }}
+                  />
+                )}
 
-                    {/* Property Address */}
-                    <div>
-                        {property.street}, {property.town}, {property.county}, {property.country}
-                    </div>
-                </li>
+                {/* Property Address */}
+                <div>
+                  {property.street}, {property.town}, {property.county}, {property.country}
+                </div>
+              </li>
             ))}
-        </ul>
-    </div>
+          </ul>
+        </div>
 
         {/* Right Column: Property Details */}
         {selectedProperty && (
@@ -101,15 +101,16 @@ const PropertyManagement = () => {
                     style={{ width: "100%", height: "300px", objectFit: "cover", borderRadius: "8px" }}
                   />
                 )}
-                <h5 className="card-title">{selectedProperty.street}, {selectedProperty.town}</h5>
+                <h5 className="card-title">{selectedProperty.street}, {selectedProperty.town}, {selectedProperty.air_code}</h5>
+
+                <p className="card-text"><strong>Owner:</strong> {ownerUsername || 'Loading...'}</p>
+                <p className="card-text"><strong>Description:</strong> {selectedProperty.description || 'No description available'}</p>
                 <p className="card-text"><strong>Property Rating:</strong> {selectedProperty.property_rating}</p>
                 <p className="card-text"><strong>Room Capacity:</strong> {selectedProperty.room_capacity}</p>
                 <p className="card-text"><strong>People Capacity:</strong> {selectedProperty.people_capacity}</p>
                 <p className="card-text"><strong>Rent Amount:</strong> ${selectedProperty.rent_amount}</p>
                 <p className="card-text"><strong>Deposit Amount:</strong> ${selectedProperty.deposit_amount}</p>
-                <p className="card-text"><strong>Owner:</strong> {ownerUsername || 'Loading...'}</p> {/* Display owner username */}
                 <p className="card-text"><strong>Property Supervisor:</strong> {selectedProperty.property_supervisor_name || 'N/A'}</p>
-
                 {/* Display All Current Tenants */}
                 <h5>Current Tenants</h5>
                 {selectedProperty.all_current_tenant.length > 0 ? (

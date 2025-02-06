@@ -29,7 +29,7 @@ function App() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/damage-repair-reports" element={<DamageRepairReports />} />
         <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} />
-        <Route path="/owners-dashboard" element={<OwnersDashboard />} /> {/* Owners dashboard route */}
+        <Route path="/owners-dashboard" element={<OwnersDashboard />} /> 
       </Routes>
     </Router>
   );

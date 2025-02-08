@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Spinner, Alert, Form } from 'react-bootstrap';
+import { Card, Row, Col, Button, Spinner, Alert, Form, Modal } from 'react-bootstrap';
 
 const OwnersDashboard = () => {
   const [properties, setProperties] = useState([]);
@@ -12,6 +12,11 @@ const OwnersDashboard = () => {
   const [message, setMessage] = useState(null);
   const [showImageInput, setShowImageInput] = useState({});
   const [activeRoomImageIndex, setActiveRoomImageIndex] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [imageFile, setImageFile] = useState(null);
+  const [description, setDescription] = useState('');
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -104,12 +109,12 @@ const OwnersDashboard = () => {
 
   const handleSaveField = (propertyId, field) => {
     const newValue = editedValues[propertyId][field];
-  
+
     // Optimistically update the properties state
-    setProperties(prevProperties => prevProperties.map(property => 
+    setProperties(prevProperties => prevProperties.map(property =>
       property.id === propertyId ? { ...property, [field]: newValue } : property
     ));
-  
+
     // Make the API call
     const token = localStorage.getItem("access_token");
     fetch(`http://127.0.0.1:8000/properties/${propertyId}/update-text-fields/`, {
@@ -119,16 +124,14 @@ const OwnersDashboard = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ [field]: newValue }),
+      
     })
-    .then(response => response.json())
-    .catch(error => {
-      console.error("Error updating property:", error);
-      // If failed, you might want to revert the change or notify the user
-    });
+      .then(response => response.json())
+      .catch(error => {
+        console.error("Error updating property:", error);
+        // If failed, you might want to revert the change or notify the user
+      });
   };
-  
-  
-
 
   const handleImageChange = (propertyId, e) => {
     const updatedProperties = properties.map(property => {
@@ -161,6 +164,9 @@ const OwnersDashboard = () => {
       .then(updatedProperty => {
         console.log("Image updated:", updatedProperty);
         setMessage({ text: "Image updated successfully!", type: "success" });
+        setTimeout(() => {
+          setMessage(null);
+        }, 1000); // 2000 milliseconds = 2 seconds
         setShowImageInput(prev => ({ ...prev, [propertyId]: false })); // Hide image input field
         setImageUploading(false); // Stop uploading state
       })
@@ -224,6 +230,115 @@ const OwnersDashboard = () => {
       });
   };
 
+  const extractPublicIdFromUrl = (url) => {
+    const regex = /https?:\/\/res\.cloudinary\.com\/[a-z0-9]+\/image\/upload\/v\d+\/([a-zA-Z0-9_-]+)/;
+    const match = url.match(regex);
+    if (match) {
+      return match[1]; // Return the public ID
+    } else {
+      console.error("Invalid Cloudinary URL", url); // Log the invalid URL for debugging
+      return null; // Return null if regex doesn't match
+    }
+  };
+
+  const handleDeleteRoomImage = async (propertyId, cloudinaryImageUrl) => {
+    const token = localStorage.getItem("access_token");
+
+    // Extract the Cloudinary public ID from the URL
+    const cloudinaryPublicId = extractPublicIdFromUrl(cloudinaryImageUrl);
+    if (!cloudinaryPublicId) {
+      console.error("Invalid Cloudinary URL");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("delete_image_public_id", cloudinaryPublicId);  // Send the Cloudinary public ID for deletion
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/properties/${propertyId}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      console.log("Server Response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.detail || "Failed to delete room image");
+      }
+      // Remove the deleted image from the state
+      setProperties(prevProperties =>
+        prevProperties.map(property => {
+          if (property.id === propertyId) {
+            const updatedRoomImages = property.room_images.filter(
+              (image) => image.image !== cloudinaryImageUrl  // Remove the deleted image
+            );
+            return { ...property, room_images: updatedRoomImages };
+          }
+          return property;
+        })
+      );
+      setShowDeleteModal(false)
+
+      setMessage({ text: "Room image deleted successfully!", type: "success" });
+      setTimeout(() => {
+        setMessage(null);
+      }, 1000); // 2000 milliseconds = 2 seconds
+
+    } catch (error) {
+      console.error("Error deleting room image:", error);
+      setMessage({ text: "Sorry can't remove image right now!", type: "error" });
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000); // 2000 milliseconds = 2 seconds
+    }
+  };
+  // Function to hide the modal
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setImageToDelete(null); // Reset the image to delete
+    setPropertyIdToDelete(null); // Reset the property ID
+  };
+  // Handle file selection
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImageFile(file); // Set the selected image file
+    }
+  };
+  const handleAddImageClick = async (propertyId, imageFile, description) => {
+    if (!propertyId) {
+      console.error("Property ID is missing!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('property', propertyId); // Ensure property ID is added
+    formData.append('image', imageFile);
+    formData.append('description', description);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/upload-room-image/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Image upload failed');
+      }
+
+      const responseData = await response.json();
+      console.log('Room image uploaded successfully:', responseData);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
 
 
 
@@ -291,6 +406,7 @@ const OwnersDashboard = () => {
                         <Button
                           variant="link"
                           onClick={() => handleEditField(property.id, field)}
+
                         >
                           Edit
                         </Button>
@@ -299,31 +415,137 @@ const OwnersDashboard = () => {
                   </div>
                 ))}
 
-                {property.room_images.map((roomImage, index) => (
-                  <Col key={index} sm={12} md={4} lg={4}>
-                    <div className="position-relative">
-                      <Card.Img variant="bottom" src={roomImage.image} alt={`Room Image ${index + 1}`} />
+                <div className="room_image_container bg-black d-flex gap-3 w-100" >
+                  |<Button
+                    variant="primary"
+                    className="position-absolute end-0 m-2"
+                    onClick={() => setIsFormVisible(!isFormVisible)}
+                  >
+                    {isFormVisible ? 'Cancel' : 'Add Image'}
+                  </Button>
 
+                  {isFormVisible && (
+                    <div className="form-container bg-light p-3 rounded">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Enter image description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
                       <Button
-                        variant="link"
-                        className="position-absolute top-0 end-0 m-2 text-white"
-                        onClick={() => handleRoomImageClick(property.id, index, roomImage.image)} // Triggering the new function
+                        variant="success"
+                        onClick={() => handleAddImageClick(property.id, imageFile, description)}
                       >
-                        Edit
+                        Upload Image
                       </Button>
-
-                      {/* Conditionally show the file input for the clicked image */}
-                      {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
-                        <input
-                          type="file"
-                          onChange={(e) => handleRoomImageChange(property.id, index, e)}  // Handle the image change
-                          className="position-absolute bottom-0 start-0 m-2"
-                        />
-                      )}
                     </div>
-                  </Col>
-                ))}
+                  )}
+                  {property.room_images.map((roomImage, index) => (
+                    <Col key={index} sm={12} md={4} lg={4}>
 
+
+
+                      <div className="position-relative bg-warning mb-5 p-2">
+
+                        <Card.Img variant="bottom" src={roomImage.image} alt={`Room Image ${index + 1}`} />
+                        {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
+                          <>
+                            <input
+                              type="file"
+                              onChange={(e) => handleRoomImageChange(property.id, index, e)}
+                              className="position-absolute bottom-0 start-0 m-2"
+                            />
+                            {/* Delete Button */}
+                            <Button
+                              variant="danger"
+                              className="position-absolute bg-white top-0 start-0 m-2"
+                              onClick={() => setShowDeleteModal(true)}
+                            >
+                              ❌
+                            </Button>
+                          </>
+                        )}
+
+
+                        {showDeleteModal && (
+                          <div
+                            className="d-flex justify-content-center align-items-center"
+                            style={{
+                              position: 'fixed',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0,0,0,0.5)', // Optional: background dim effect
+                              zIndex: 1050, // Optional: Ensure it's on top
+                            }}
+                          >
+                            <Card style={{ width: '18rem' }}>
+                              <Card.Body>
+                                <Card.Title>Confirm Deletion</Card.Title>
+                                <Card.Text>
+                                  Are you sure you want to delete this image?
+                                </Card.Text>
+                                <div className="d-flex justify-content-between">
+                                  <Button variant="secondary" onClick={handleCloseDeleteModal}>
+                                    Cancel
+                                  </Button>
+                                  <Button variant="danger" onClick={() => handleDeleteRoomImage(property.id, roomImage.image)}>
+                                    Confirm Delete
+                                  </Button>
+                                </div>
+                              </Card.Body>
+                            </Card>
+                          </div>
+                        )}
+
+                        {message && (
+                          <div
+                            className="d-flex justify-content-center align-items-center"
+                            style={{
+                              position: 'fixed',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              zIndex: 1050,
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              padding: '10px',
+                            }}
+                          >
+                            <Alert variant={message.type === 'success' ? 'success' : 'danger'} style={{ width: '300px', textAlign: 'center' }}>
+                              {message.text}
+                            </Alert>
+                          </div>
+                        )}
+
+                        <Button
+                          variant="link"
+                          className="position-absolute top-0 end-0 m-2 p-0 bg-dark text-white"
+                          onClick={() => handleRoomImageClick(property.id, index, roomImage.image)} // Triggering the new function
+                        >
+                          Edit
+                        </Button>
+                        {/* Conditionally show the file input for the clicked image */}
+                        {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
+                          <input
+                            type="file"
+                            onChange={(e) => handleRoomImageChange(property.id, index, e)}  // Handle the image change
+                            className="position-absolute bottom-0 start-0 m-2"
+                          />
+                        )}
+                      </div>
+                    </Col>
+                  ))}
+                </div>
 
               </Card.Body>
             </Card>

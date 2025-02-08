@@ -11,6 +11,7 @@ import CashFlows from './pages/CashFlows';
 import DamageRepairReports from './pages/DamageRepairReports';
 import AddDamageRepairReport from './components/AddDamageRepairReport';
 import OwnersDashboard from './pages/OwnersDashboard';
+import CreateProperty from './components/CreateProperty';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/damage-repair-reports" element={<DamageRepairReports />} />
         <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} />
         <Route path="/owners-dashboard" element={<OwnersDashboard />} /> 
+        <Route path="/create-property" element={<CreateProperty />} />
       </Routes>
     </Router>
   );

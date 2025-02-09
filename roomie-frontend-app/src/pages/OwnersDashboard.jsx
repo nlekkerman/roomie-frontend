@@ -18,7 +18,9 @@ const OwnersDashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [description, setDescription] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
-
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -45,8 +47,8 @@ const OwnersDashboard = () => {
       } finally {
         setLoading(false);
       }
-    
-    
+
+
     };
 
     fetchProperties();
@@ -94,6 +96,72 @@ const OwnersDashboard = () => {
     }));
   };
 
+  const handleRequestClick = (request) => {
+    setSelectedRequest(request);
+    setNewStatus(request.status); // Set default status to the current one
+    setShowModal(true);
+  };
+  const updateRepairStatus = async (requestId, newStatus) => {
+    try {
+      console.log(`🔧 Attempting to update status for Repair Request ID: ${requestId}`);
+      console.log(`➡️ New status to update: ${newStatus}`);
+
+      const response = await fetch(`http://127.0.0.1:8000/damage-reports/${requestId}/update-status/`, { // Corrected URL
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`, // Ensure authentication
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      console.log(`📤 Sent PATCH request to: /damage-reports/${requestId}/update-status/`); // Corrected URL
+      console.log("⏳ Awaiting response...");
+
+      if (!response.ok) {
+        console.error(`❌ Failed to update status. HTTP Status: ${response.status}`);
+        throw new Error("Failed to update status");
+      }
+
+      const data = await response.json();
+      console.log(`✅ Status updated successfully! New status: ${data.new_status}`);
+
+      return data.new_status;
+    } catch (error) {
+      console.error("❌ Error updating repair status:", error);
+    }
+  };
+
+
+  // Handle status update
+  const handleStatusUpdate = async () => {
+    if (!selectedRequest) return;
+    console.log(`🔧 Handling status update for request ID: ${selectedRequest.id}`);
+
+    try {
+      const updatedStatus = await updateRepairStatus(selectedRequest.id, newStatus);
+
+      if (updatedStatus) {
+        console.log(`✅ Status updated successfully: ${updatedStatus}`);
+        // Update the status in the repairRequests state (this should be the parent state that contains the list of requests)
+        setRepairRequests((prevRequests) => {
+          return prevRequests.map((request) => {
+            // If the request ID matches, update the status, else return the original request
+            if (request.id === selectedRequest.id) {
+              return { ...request, status: updatedStatus };
+            }
+            return request;
+          });
+        });
+        setSelectedRequest((prev) => ({ ...prev, status: updatedStatus }));
+        setShowModal(false);
+      } else {
+        console.error('❌ Failed to update status.');
+      }
+    } catch (error) {
+      console.error('❌ Error in handleStatusUpdate:', error);
+    }
+  };
 
   const handleRoomImageClick = (propertyId, index, imageUrl) => {
     // Extract Cloudinary public ID from the image URL
@@ -162,7 +230,7 @@ const OwnersDashboard = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ [field]: newValue }),
-      
+
     })
       .then(response => response.json())
       .catch(error => {
@@ -344,17 +412,17 @@ const OwnersDashboard = () => {
     console.log("🚀 Upload process started...");
 
     if (!propertyId) {
-        console.error("❌ Property ID is missing!");
-        return;
+      console.error("❌ Property ID is missing!");
+      return;
     }
 
     if (!imageFile) {
-        console.error("❌ No image file selected!");
-        return;
+      console.error("❌ No image file selected!");
+      return;
     }
 
     if (!description) {
-        console.warn("⚠️ No description provided. Defaulting to an empty string.");
+      console.warn("⚠️ No description provided. Defaulting to an empty string.");
     }
 
     console.log("🔄 Preparing FormData...");
@@ -365,102 +433,104 @@ const OwnersDashboard = () => {
 
     console.log("📝 FORM DATA ENTRIES:");
     for (let [key, value] of formData.entries()) {
-        console.log(`   ${key}:`, value);
+      console.log(`   ${key}:`, value);
     }
 
     const token = localStorage.getItem("access_token");
     if (!token) {
-        console.error("❌ No access token found in localStorage! User may not be authenticated.");
-        return;
+      console.error("❌ No access token found in localStorage! User may not be authenticated.");
+      return;
     }
 
     try {
-        console.log("🌍 Sending request to backend...");
-        const response = await fetch("http://127.0.0.1:8000/upload-room-image/", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`, // No 'Content-Type', as FormData sets it automatically
-            },
-            body: formData,
-        });
+      console.log("🌍 Sending request to backend...");
+      const response = await fetch("http://127.0.0.1:8000/upload-room-image/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, // No 'Content-Type', as FormData sets it automatically
+        },
+        body: formData,
+      });
 
-        console.log(`📡 Response status: ${response.status}`);
+      console.log(`📡 Response status: ${response.status}`);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`❌ Image upload failed. Status: ${response.status}, Response: ${errorText}`);
-            return;
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Image upload failed. Status: ${response.status}, Response: ${errorText}`);
+        return;
+      }
 
-        const responseData = await response.json();
-        console.log("✅ Room image uploaded successfully:", responseData);
+      const responseData = await response.json();
+      console.log("✅ Room image uploaded successfully:", responseData);
 
-        if (!responseData.image_url) {
-            console.error("❌ Response does not contain 'image_url'! Backend may not be returning it.");
-            return;
-        }
+      if (!responseData.image_url) {
+        console.error("❌ Response does not contain 'image_url'! Backend may not be returning it.");
+        return;
+      }
 
-        // Update the properties state with the new room image
-        setProperties((prevProperties) =>
-            prevProperties.map((property) =>
-                property.id === propertyId
-                    ? {
-                          ...property,
-                          room_images: [
-                              ...property.room_images,
-                              {
-                                  image: responseData.image_url, // Ensure correct field is used
-                                  description: description || "",
-                              },
-                          ],
-                      }
-                    : property
-            )
-        );
+      // Update the properties state with the new room image
+      setProperties((prevProperties) =>
+        prevProperties.map((property) =>
+          property.id === propertyId
+            ? {
+              ...property,
+              room_images: [
+                ...property.room_images,
+                {
+                  image: responseData.image_url, // Ensure correct field is used
+                  description: description || "",
+                },
+              ],
+            }
+            : property
+        )
+      );
 
-        console.log("✅ State updated with new image.");
-        await fetchUpdatedProperty(propertyId);
-        
-        // Reset UI
-        setIsFormVisible(false);
-        setImageFile(null);
-        setDescription("");
+      console.log("✅ State updated with new image.");
+      await fetchUpdatedProperty(propertyId);
+
+      // Reset UI
+      setIsFormVisible(false);
+      setImageFile(null);
+      setDescription("");
     } catch (error) {
-        console.error("❌ Error uploading image:", error);
+      console.error("❌ Error uploading image:", error);
     }
-};
+  };
 
   const fetchUpdatedProperty = async (propertyId) => {
     console.log("🔄 Fetching updated property data...");
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/properties/${propertyId}/`);
-        
-        if (!response.ok) {
-            console.error("❌ Failed to fetch updated property data.");
-            return;
-        }
+      const response = await fetch(`http://127.0.0.1:8000/properties/${propertyId}/`);
 
-        const updatedProperty = await response.json();
-        console.log("✅ Updated property data:", updatedProperty);
+      if (!response.ok) {
+        console.error("❌ Failed to fetch updated property data.");
+        return;
+      }
 
-        setProperties((prevProperties) =>
-            prevProperties.map((property) =>
-                property.id === propertyId ? updatedProperty : property
-            )
-        );
+      const updatedProperty = await response.json();
+      console.log("✅ Updated property data:", updatedProperty);
+
+      setProperties((prevProperties) =>
+        prevProperties.map((property) =>
+          property.id === propertyId ? updatedProperty : property
+        )
+      );
     } catch (error) {
-        console.error("❌ Error fetching updated property data:", error);
+      console.error("❌ Error fetching updated property data:", error);
     }
-};
+  };
 
-const handlePropertyClick = (propertyId) => {
-  setSelectedPropertyId(propertyId); // Set the selected property ID
-};
+  const handlePropertyClick = (propertyId) => {
+    setSelectedPropertyId(propertyId); // Set the selected property ID
+  };
 
-const handleBackToList = () => {
-  setSelectedPropertyId(null); // Reset to show property list
-};
+  const handleBackToList = () => {
+    setSelectedPropertyId(null); // Reset to show property list
+  };
+
+
 
   if (loading) {
     return <div className="text-center"><Spinner animation="border" variant="primary" /></div>;
@@ -478,10 +548,10 @@ const handleBackToList = () => {
       {/* Display the list of properties if no property is selected */}
       {selectedPropertyId === null ? (
         <div className="owner-dashboard-properties-summary mb-4">
-          <h4>All Properties</h4>
+          <h4>Your Properties</h4>
           <Row className="owner-dashboard-summary-row">
             {properties.map((property) => (
-              <Col key={property.id} className="owner-dashboard-summary-col">
+              <Col xs={12} sm={6} md={6} lg={4} key={property.id} className="owner-dashboard-summary-col">
                 <Card className="owner-dashboard-summary-card mb-4">
                   <Card.Body className="owner-dashboard-summary-card-body">
                     <div className="owner-dashboard-summary-card-img-container position-relative">
@@ -495,15 +565,13 @@ const handleBackToList = () => {
                     <Card.Title className="owner-dashboard-summary-card-title mt-3">
                       {property.house_number} {property.street}, {property.town}, {property.county}, {property.country}
                     </Card.Title>
-                    <Button
-                      variant="primary"
-                      onClick={() => handlePropertyClick(property.id)} // Show detailed view
-                    >
+                    <Button variant="primary" onClick={() => handlePropertyClick(property.id)}>
                       View Details
                     </Button>
                   </Card.Body>
                 </Card>
               </Col>
+
             ))}
           </Row>
         </div>
@@ -625,14 +693,14 @@ const handleBackToList = () => {
                       {property.room_images.map((roomImage, index) => (
                         <Col key={index} sm={12} md={4} lg={4} className="owner-dashboard-room-image-col">
                           <div className="owner-dashboard-room-image-container position-relative">
-                          <Button
-                        variant="link"
-                        className="owner-dashboard-room-image-edit-btn position-absolute top-0 end-0 m-2 p-0"
-                        onClick={() => handleRoomImageClick(property.id, index, roomImage.image)}
-                      >
-                        Edit
-                      </Button>
-                            
+                            <Button
+                              variant="link"
+                              className="owner-dashboard-room-image-edit-btn position-absolute top-0 end-0 m-2 p-0"
+                              onClick={() => handleRoomImageClick(property.id, index, roomImage.image)}
+                            >
+                              Edit
+                            </Button>
+
                             <Card.Img
                               variant="bottom"
                               src={roomImage.image_url}
@@ -655,37 +723,37 @@ const handleBackToList = () => {
                                 </Button>
                               </>
                             )}
-                             {showDeleteModal && (
-                          <div
-                            className="d-flex justify-content-center align-items-center"
-                            style={{
-                              position: 'fixed',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: 'rgba(0,0,0,0.5)', // Optional: background dim effect
-                              zIndex: 1050, // Optional: Ensure it's on top
-                            }}
-                          >
-                            <Card style={{ width: '18rem' }}>
-                              <Card.Body>
-                                <Card.Title>Confirm Deletion</Card.Title>
-                                <Card.Text>
-                                  Are you sure you want to delete this image?
-                                </Card.Text>
-                                <div className="d-flex justify-content-between">
-                                  <Button variant="secondary" onClick={handleCloseDeleteModal}>
-                                    Cancel
-                                  </Button>
-                                  <Button variant="danger" onClick={() => handleDeleteRoomImage(property.id, roomImage.image)}>
-                                    Confirm Delete
-                                  </Button>
-                                </div>
-                              </Card.Body>
-                            </Card>
-                          </div>
-                        )}
+                            {showDeleteModal && (
+                              <div
+                                className="d-flex justify-content-center align-items-center"
+                                style={{
+                                  position: 'fixed',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  backgroundColor: 'rgba(0,0,0,0.5)', // Optional: background dim effect
+                                  zIndex: 1050, // Optional: Ensure it's on top
+                                }}
+                              >
+                                <Card style={{ width: '18rem' }}>
+                                  <Card.Body>
+                                    <Card.Title>Confirm Deletion</Card.Title>
+                                    <Card.Text>
+                                      Are you sure you want to delete this image?
+                                    </Card.Text>
+                                    <div className="d-flex justify-content-between">
+                                      <Button variant="secondary" onClick={handleCloseDeleteModal}>
+                                        Cancel
+                                      </Button>
+                                      <Button variant="danger" onClick={() => handleDeleteRoomImage(property.id, roomImage.image)}>
+                                        Confirm Delete
+                                      </Button>
+                                    </div>
+                                  </Card.Body>
+                                </Card>
+                              </div>
+                            )}
                           </div>
                         </Col>
                       ))}
@@ -696,45 +764,55 @@ const handleBackToList = () => {
               </Col>
             ))}
         </Row>
-        
+
       )}
 
-<div className="repair-requests-section mt-4">
+
+      <div className="repair-requests-section mt-4">
         <h4>Repair Requests</h4>
-        {loading ? (
-          <div>Loading...</div>
-        ) : repairRequests.length > 0 ? (
+        {repairRequests.length > 0 ? (
           <Row>
             {repairRequests.map((request) => (
               <Col key={request.id} md={6} lg={4} className="repair-request-col mb-3">
-                <Card>
+                <Card className="repair-card" onClick={() => handleRequestClick(request)} style={{ cursor: "pointer" }}>
                   <Card.Body>
                     <h5>Repair Request for Property: {request.property_address}</h5>
                     <p><strong>Description:</strong> {request.description}</p>
-                    <p><strong>Status:</strong> <strong className='bg-warning'> {request.status} </strong></p>
-                    <p><strong>Reported At:</strong> {new Date(request.reported_at).toLocaleString()}</p>
+                    <p><strong>Status:</strong>
+                      {/* Conditional classes for different statuses */}
+                      <strong
+                        className={`
+              ${request.status === "in_progress" ? "bg-warning" : ""}
+              ${request.status === "pending" ? "bg-danger" : ""}
+              ${request.status === "resolved" ? "bg-success" : ""}
+            `}
+                      >
+                        {request.status === "in_progress" ? "Fixing" :
+                          request.status === "pending" ? "Pending" :
+                            request.status === "resolved" ? "Resolved" : request.status}
+                      </strong>
+                    </p>                  <p><strong>Reported At:</strong> {new Date(request.reported_at).toLocaleString()}</p>
                     <p><strong>Reported by:</strong> {request.tenant}</p>
-
-                    {/* Display Repair Images */}
-                  {request.repair_images && request.repair_images.length > 0 ? (
-                    <div className="repair-images">
-                      <h6>🖼 Repair Images:</h6>
-                      <div className="image-grid">
-                        {request.repair_images.map((image, index) => (
-                          <div key={index} className="image-item">
-                            <img
-                              src={image.image} // Assuming `image.image` contains the URL of the image
-                              alt={`Repair Image ${index + 1}`}
-                              className="repair-image"
-                              style={{ width: '100%', height: 'auto' }}
-                            />
-                          </div>
-                        ))}
+                    {/* Images Section */}
+                    {request.repair_images && request.repair_images.length > 0 ? (
+                      <div className="repair-images">
+                        <h6>🖼 Repair Images:</h6>
+                        <div className="image-grid">
+                          {request.repair_images.map((image, index) => (
+                            <div key={index} className="image-item">
+                              <img
+                                src={image.image}
+                                alt={`Repair Image ${index + 1}`}
+                                className="repair-image"
+                                onClick={() => setSelectedImage(image.image)}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <p className="no-images">No images available.</p>
-                  )}
+                    ) : (
+                      <p className="no-images">No images available.</p>
+                    )}
                   </Card.Body>
                 </Card>
               </Col>
@@ -743,9 +821,36 @@ const handleBackToList = () => {
         ) : (
           <p>No repair requests found.</p>
         )}
+
+        {/* Status Update Modal */}
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Update Repair Status</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {selectedRequest && (
+              <>
+                <p><strong>Property:</strong> {selectedRequest.property_address}</p>
+                <p><strong>Description:</strong> {selectedRequest.description}</p>
+                <Form.Group>
+                  <Form.Label>Status</Form.Label>
+                  <Form.Select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                  </Form.Select>
+                </Form.Group>
+              </>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button variant="primary" onClick={handleStatusUpdate}>Update Status</Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
-    
+
   );
 };
 

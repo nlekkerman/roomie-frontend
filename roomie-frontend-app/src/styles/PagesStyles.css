@@ -569,9 +569,9 @@ body{
 /* General container */
 .owner-dashboard-container {
     margin-top: 80px;
-    background-color: #28a745;
+    background-color: transparent;
     width: 100vw;
-    height: 100vh;
+    height: 100%;
   }
   
   .owner-dashboard-title {
@@ -602,28 +602,16 @@ body{
   
   .owner-dashboard-card-body {
     padding: 20px;
-    background-color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0.5);
   }
   
   .owner-dashboard-card-img-container {
     position: relative;
     margin-bottom: 20px;
   }
-  .owner-dashboard-summary-col {
-    flex: 1 1 30%; /* This means it will take up 30% of the width, and wrap if needed */
-    max-width: 30%; /* Ensure the width doesn't go over 30% */
-    padding: 10px; /* Add padding to separate items */
-  }
+  
 
-   .owner-dashboard-summary-row {
-    background-color: #0cef4c;
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap !important;
-    max-width: 100%;
-    justify-content: center;
-  }
+   
   .owner-dashboard-card-img {
     border-radius: 10px;
     object-fit: cover;
@@ -689,7 +677,7 @@ body{
   
   .owner-dashboard-upload-btn {
     width: 100%;
-    background-color: #2ecc71;
+    background-color: transparent;
     color: #fff;
     padding: 12px;
     border-radius: 8px;
@@ -748,7 +736,10 @@ body{
     font-size: 1.25rem;
     font-weight: bold;
   }
-  
+  .owner-dashboard-summary-card-img{
+    max-height: 250px;
+    height: 250px;
+  }
   .owner-dashboard-modal-text {
     margin-bottom: 20px;
   }
@@ -795,7 +786,6 @@ body{
   .repair-images {
     margin-top: 10px;
     width: 100%;
-    background-color: #0056b3;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -823,4 +813,8 @@ body{
     width: 100%;
     height: auto;
     object-fit: cover;
+  }
+  .repair-card{
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    color: white !important;
   }

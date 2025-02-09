@@ -13,7 +13,8 @@ const OwnersDashboard = () => {
   const [showImageInput, setShowImageInput] = useState({});
   const [activeRoomImageIndex, setActiveRoomImageIndex] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [repairRequests, setRepairRequests] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [description, setDescription] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -44,9 +45,46 @@ const OwnersDashboard = () => {
       } finally {
         setLoading(false);
       }
+    
+    
     };
 
     fetchProperties();
+    // Fetch repair requests after fetching properties
+    const fetchRepairRequests = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setError("No authentication token found");
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/damage-reports/", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch damage repair reports");
+        }
+
+        const data = await response.json();
+        setRepairRequests(data); // Store repair requests in state
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch repair requests
+    fetchRepairRequests();
   }, []);
 
   const toggleRoomImages = (propertyId) => {
@@ -175,6 +213,7 @@ const OwnersDashboard = () => {
         setMessage({ text: "Error updating image. Please try again.", type: "danger" }); setImageUploading(false); // Stop uploading state
       });
   };
+
   const handleRoomImageChange = (propertyId, index, e) => {
     const updatedProperties = properties.map(property => {
       if (property.id === propertyId) {
@@ -233,7 +272,6 @@ const OwnersDashboard = () => {
       });
   };
 
-  
 
   const handleDeleteRoomImage = async (propertyId, cloudinaryImageUrl) => {
     const token = localStorage.getItem("access_token");
@@ -416,7 +454,13 @@ const OwnersDashboard = () => {
     }
 };
 
+const handlePropertyClick = (propertyId) => {
+  setSelectedPropertyId(propertyId); // Set the selected property ID
+};
 
+const handleBackToList = () => {
+  setSelectedPropertyId(null); // Reset to show property list
+};
 
   if (loading) {
     return <div className="text-center"><Spinner animation="border" variant="primary" /></div>;
@@ -425,130 +469,193 @@ const OwnersDashboard = () => {
   if (error) {
     return <Alert variant="danger">{error}</Alert>;
   }
-
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Owner's Dashboard</h2>
+    <div className="owner-dashboard-container mt-5">
+      <h2 className="owner-dashboard-title text-center mb-4">Owner's Dashboard</h2>
 
-      {message && <Alert variant={message.type}>{message.text}</Alert>} {/* Display success or error message */}
+      {message && <Alert variant={message.type} className="owner-dashboard-alert">{message.text}</Alert>}
 
-      <Row>
-        {properties.map((property) => (
-          <Col key={property.id} sm={12} md={12} lg={12}>
-            <Card className="shadow-lg mb-4 rounded-lg">
-              <Card.Body>
-                <div className="position-relative">
-                  <Card.Img variant="top" src={property.main_image || "default_image_url.jpg"} alt="Main Image" />
-                  <Button
-                    variant="link"
-                    className="position-absolute top-0 end-0 m-2 text-white"
-                    onClick={() => handleEditField(property.id, 'main_image')}
-                  >
-                    Edit
-                  </Button>
-                  {editingFields[property.id] === 'main_image' && (
-                    <input
-                      type="file"
-                      onChange={(e) => handleImageChange(property.id, e)}
-                      className="position-absolute bottom-0 start-0 m-2"
-                    />
-                  )}
-                </div>
-
-                <Card.Title className="text-primary mt-3">
-                  {property.house_number} {property.street}, {property.town}, {property.county}, {property.country}
-                </Card.Title>
-
-                {['air_code', 'folio_number', 'description', 'property_rating', 'room_capacity', 'people_capacity', 'deposit_amount', 'rent_amount'].map(field => (
-                  <div key={field}>
-                    <strong>{field.replace('_', ' ').toUpperCase()}:</strong>
-                    {editingFields[property.id] === field ? (
-                      <div>
-                        <Form.Control
-                          type="text"
-                          value={editedValues[property.id]?.[field] || property[field]}
-                          onChange={(e) => handleFieldChange(property.id, field, e.target.value)}
-                        />
-                        <Button
-                          variant="link"
-                          onClick={() => handleSaveField(property.id, field)}
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    ) : (
-                      <div>
-                        {property[field]}
-                        <Button
-                          variant="link"
-                          onClick={() => handleEditField(property.id, field)}
-
-                        >
-                          Edit
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                <div className="room_image_container bg-black d-flex gap-3 w-100" >
-                  |<Button
-                    variant="primary"
-                    className="position-absolute end-0 m-2"
-                    onClick={() => setIsFormVisible(!isFormVisible)}
-                  >
-                    {isFormVisible ? 'Cancel' : 'Add Image'}
-                  </Button>
-
-                  {isFormVisible && (
-                    <div className="form-container bg-light p-3 rounded">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
+      {/* Display the list of properties if no property is selected */}
+      {selectedPropertyId === null ? (
+        <div className="owner-dashboard-properties-summary mb-4">
+          <h4>All Properties</h4>
+          <Row className="owner-dashboard-summary-row">
+            {properties.map((property) => (
+              <Col key={property.id} className="owner-dashboard-summary-col">
+                <Card className="owner-dashboard-summary-card mb-4">
+                  <Card.Body className="owner-dashboard-summary-card-body">
+                    <div className="owner-dashboard-summary-card-img-container position-relative">
+                      <Card.Img
+                        variant="top"
+                        src={property.main_image || "default_image_url.jpg"}
+                        alt="Property Image"
+                        className="owner-dashboard-summary-card-img"
                       />
-                      <input
-                        type="text"
-                        placeholder="Enter image description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                    </div>
+                    <Card.Title className="owner-dashboard-summary-card-title mt-3">
+                      {property.house_number} {property.street}, {property.town}, {property.county}, {property.country}
+                    </Card.Title>
+                    <Button
+                      variant="primary"
+                      onClick={() => handlePropertyClick(property.id)} // Show detailed view
+                    >
+                      View Details
+                    </Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
+      ) : (
+        // Display the detailed property view for the selected property
+        <Row className="owner-dashboard-row">
+          {properties
+            .filter((property) => property.id === selectedPropertyId)
+            .map((property) => (
+              <Col key={property.id} sm={12} md={12} lg={12} className="owner-dashboard-col">
+                <Card className="owner-dashboard-card mb-4">
+                  <Card.Body className="owner-dashboard-card-body">
+                    {/* Back Button to return to the list of properties */}
+                    <Button
+                      variant="secondary"
+                      onClick={handleBackToList}
+                      className="mb-3"
+                    >
+                      Back to Property List
+                    </Button>
+
+                    <div className="owner-dashboard-card-img-container position-relative">
+                      <Card.Img
+                        variant="top"
+                        src={property.main_image || "default_image_url.jpg"}
+                        alt="Main Image"
+                        className="owner-dashboard-card-img"
                       />
                       <Button
-                        variant="success"
-                        onClick={() => handleAddImageClick(property.id, imageFile, description)}
+                        variant="link"
+                        className="owner-dashboard-edit-btn position-absolute top-0 end-0 m-2 text-white"
+                        onClick={() => handleEditField(property.id, 'main_image')}
                       >
-                        Upload Image
+                        Edit
                       </Button>
+                      {editingFields[property.id] === 'main_image' && (
+                        <input
+                          type="file"
+                          onChange={(e) => handleImageChange(property.id, e)}
+                          className="owner-dashboard-file-input position-absolute bottom-0 start-0 m-2"
+                        />
+                      )}
                     </div>
-                  )}
-                  {property.room_images.map((roomImage, index) => (
-                    <Col key={index} sm={12} md={4} lg={4}>
 
+                    <Card.Title className="owner-dashboard-card-title text-primary mt-3">
+                      {property.house_number} {property.street}, {property.town}, {property.county}, {property.country}
+                    </Card.Title>
 
-
-                      <div className="position-relative bg-warning mb-5 p-2">
-
-                        <Card.Img variant="bottom" src={roomImage.image_url} alt={`Room Image ${index + 1}`} />
-                        {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
-                          <>
-                            <input
-                              type="file"
-                              onChange={(e) => handleRoomImageChange(property.id, index, e)}
-                              className="position-absolute bottom-0 start-0 m-2"
+                    {['air_code', 'folio_number', 'description', 'property_rating', 'room_capacity', 'people_capacity', 'deposit_amount', 'rent_amount'].map(field => (
+                      <div key={field} className="owner-dashboard-field">
+                        <strong>{field.replace('_', ' ').toUpperCase()}:</strong>
+                        {editingFields[property.id] === field ? (
+                          <div className="owner-dashboard-edit-field">
+                            <Form.Control
+                              type="text"
+                              value={editedValues[property.id]?.[field] || property[field]}
+                              onChange={(e) => handleFieldChange(property.id, field, e.target.value)}
+                              className="owner-dashboard-form-control"
                             />
-                            {/* Delete Button */}
                             <Button
-                              variant="danger"
-                              className="position-absolute bg-white top-0 start-0 m-2"
-                              onClick={() => setShowDeleteModal(true)}
+                              variant="link"
+                              className="owner-dashboard-save-btn"
+                              onClick={() => handleSaveField(property.id, field)}
                             >
-                              ❌
+                              Save
                             </Button>
-                          </>
+                          </div>
+                        ) : (
+                          <div className="owner-dashboard-view-field">
+                            {property[field]}
+                            <Button
+                              variant="link"
+                              className="owner-dashboard-edit-btn"
+                              onClick={() => handleEditField(property.id, field)}
+                            >
+                              Edit
+                            </Button>
+                          </div>
                         )}
+                      </div>
+                    ))}
 
+                    {/* Image upload form */}
+                    <div className="owner-dashboard-image-upload">
+                      <Button
+                        variant="primary"
+                        className="owner-dashboard-toggle-form-btn position-absolute end-0 m-2"
+                        onClick={() => setIsFormVisible(!isFormVisible)}
+                      >
+                        {isFormVisible ? 'Cancel' : 'Add Image'}
+                      </Button>
 
-                        {showDeleteModal && (
+                      {isFormVisible && (
+                        <div className="owner-dashboard-form-container">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="owner-dashboard-file-input"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Enter image description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="owner-dashboard-description-input"
+                          />
+                          <Button
+                            variant="success"
+                            className="owner-dashboard-upload-btn"
+                            onClick={() => handleAddImageClick(property.id, imageFile, description)}
+                          >
+                            Upload Image
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Room Images */}
+                      {property.room_images.map((roomImage, index) => (
+                        <Col key={index} sm={12} md={4} lg={4} className="owner-dashboard-room-image-col">
+                          <div className="owner-dashboard-room-image-container position-relative">
+                          <Button
+                        variant="link"
+                        className="owner-dashboard-room-image-edit-btn position-absolute top-0 end-0 m-2 p-0"
+                        onClick={() => handleRoomImageClick(property.id, index, roomImage.image)}
+                      >
+                        Edit
+                      </Button>
+                            
+                            <Card.Img
+                              variant="bottom"
+                              src={roomImage.image_url}
+                              alt={`Room Image ${index + 1}`}
+                              className="owner-dashboard-room-image"
+                            />
+                            {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
+                              <>
+                                <input
+                                  type="file"
+                                  onChange={(e) => handleRoomImageChange(property.id, index, e)}
+                                  className="owner-dashboard-room-image-input position-absolute bottom-0 start-0 m-2"
+                                />
+                                <Button
+                                  variant="danger"
+                                  className="owner-dashboard-delete-btn position-absolute top-0 start-0 m-2"
+                                  onClick={() => setShowDeleteModal(true)}
+                                >
+                                  ❌
+                                </Button>
+                              </>
+                            )}
+                             {showDeleteModal && (
                           <div
                             className="d-flex justify-content-center align-items-center"
                             style={{
@@ -579,58 +686,70 @@ const OwnersDashboard = () => {
                             </Card>
                           </div>
                         )}
-
-                        {message && (
-                          <div
-                            className="d-flex justify-content-center align-items-center"
-                            style={{
-                              position: 'fixed',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: 'rgba(0,0,0,0.5)',
-                              zIndex: 1050,
-                              display: 'flex',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              padding: '10px',
-                            }}
-                          >
-                            <Alert variant={message.type === 'success' ? 'success' : 'danger'} style={{ width: '300px', textAlign: 'center' }}>
-                              {message.text}
-                            </Alert>
                           </div>
-                        )}
+                        </Col>
+                      ))}
+                    </div>
 
-                        <Button
-                          variant="link"
-                          className="position-absolute top-0 end-0 m-2 p-0 bg-dark text-white"
-                          onClick={() => handleRoomImageClick(property.id, index, roomImage.image)} // Triggering the new function
-                        >
-                          Edit
-                        </Button>
-                        {/* Conditionally show the file input for the clicked image */}
-                        {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
-                          <input
-                            type="file"
-                            onChange={(e) => handleRoomImageChange(property.id, index, e)}  // Handle the image change
-                            className="position-absolute bottom-0 start-0 m-2"
-                          />
-                        )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+        </Row>
+        
+      )}
+
+<div className="repair-requests-section mt-4">
+        <h4>Repair Requests</h4>
+        {loading ? (
+          <div>Loading...</div>
+        ) : repairRequests.length > 0 ? (
+          <Row>
+            {repairRequests.map((request) => (
+              <Col key={request.id} md={6} lg={4} className="repair-request-col mb-3">
+                <Card>
+                  <Card.Body>
+                    <h5>Repair Request for Property: {request.property_address}</h5>
+                    <p><strong>Description:</strong> {request.description}</p>
+                    <p><strong>Status:</strong> <strong className='bg-warning'> {request.status} </strong></p>
+                    <p><strong>Reported At:</strong> {new Date(request.reported_at).toLocaleString()}</p>
+                    <p><strong>Reported by:</strong> {request.tenant}</p>
+
+                    {/* Display Repair Images */}
+                  {request.repair_images && request.repair_images.length > 0 ? (
+                    <div className="repair-images">
+                      <h6>🖼 Repair Images:</h6>
+                      <div className="image-grid">
+                        {request.repair_images.map((image, index) => (
+                          <div key={index} className="image-item">
+                            <img
+                              src={image.image} // Assuming `image.image` contains the URL of the image
+                              alt={`Repair Image ${index + 1}`}
+                              className="repair-image"
+                              style={{ width: '100%', height: 'auto' }}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    </Col>
-                  ))}
-                </div>
-
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+                    </div>
+                  ) : (
+                    <p className="no-images">No images available.</p>
+                  )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <p>No repair requests found.</p>
+        )}
+      </div>
     </div>
+    
   );
-
 };
+
+
+
 
 export default OwnersDashboard;

@@ -411,4 +411,416 @@ body{
     height: 20px;
 }
 
+  /* REPAIR PAGE STYLES */
+
+  /* Global Styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.add-report-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 1rem;
+}
+
+.add-report-btn:hover {
+    background-color: #0056b3;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+}
+
+.spinner {
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.report-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.report-card-body {
+    padding: 20px;
+}
+
+.report-title {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.property-address {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    color: white;
+}
+
+.status-badge.pending {
+    background-color: #ffc107;
+}
+
+.status-badge.in_progress {
+    background-color: #007bff;
+}
+
+.status-badge.resolved {
+    background-color: #28a745;
+}
+
+.repair-images {
+    margin-top: 20px;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.image-item {
+    cursor: pointer;
+}
+
+.repair-image {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-images {
+    color: #6c757d;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+}
+
+.modal-image {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.close-modal-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.close-modal-btn:hover {
+    background-color: #5a6268;
+}
+/*OWNER DASHBOARD STYLES */
+
+
+/* General container */
+.owner-dashboard-container {
+    margin-top: 80px;
+    background-color: #28a745;
+    width: 100vw;
+    height: 100vh;
+  }
   
+  .owner-dashboard-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  
+  .owner-dashboard-alert {
+    margin-top: 20px;
+    font-size: 1rem;
+  }
+  
+  /* Layout styles for rows and columns */
+  .owner-dashboard-row {
+    margin-top: 30px;
+  }
+  
+  .owner-dashboard-col {
+    margin-bottom: 20px;
+  }
+  
+  .owner-dashboard-card {
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+ width: 100%;
+  }
+  
+  .owner-dashboard-card-body {
+    padding: 20px;
+    background-color: rgb(255, 255, 255);
+  }
+  
+  .owner-dashboard-card-img-container {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .owner-dashboard-summary-col {
+    flex: 1 1 30%; /* This means it will take up 30% of the width, and wrap if needed */
+    max-width: 30%; /* Ensure the width doesn't go over 30% */
+    padding: 10px; /* Add padding to separate items */
+  }
+
+   .owner-dashboard-summary-row {
+    background-color: #0cef4c;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap !important;
+    max-width: 100%;
+    justify-content: center;
+  }
+  .owner-dashboard-card-img {
+    border-radius: 10px;
+    object-fit: cover;
+    width: 100%;
+    height: 200px;
+  }
+  
+  .owner-dashboard-edit-btn {
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .owner-dashboard-edit-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .owner-dashboard-field {
+    margin-bottom: 15px;
+  }
+  
+  .owner-dashboard-form-control {
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+  
+  .owner-dashboard-save-btn {
+    margin-top: 5px;
+    color: #27ae60;
+  }
+  
+  .owner-dashboard-view-field {
+    margin-bottom: 15px;
+  }
+  
+  .owner-dashboard-image-upload {
+    position: relative;
+  }
+  
+  .owner-dashboard-toggle-form-btn {
+    background-color: #2980b9;
+    color: #fff;
+  }
+  
+  .owner-dashboard-form-container {
+    background-color: #ecf0f1;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .owner-dashboard-file-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .owner-dashboard-description-input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+  }
+  
+  .owner-dashboard-upload-btn {
+    width: 100%;
+    background-color: #2ecc71;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .owner-dashboard-room-image-col {
+    margin-bottom: 15px;
+  }
+  
+  .owner-dashboard-room-image-container {
+    position: relative;
+  }
+  
+  .owner-dashboard-room-image {
+    border-radius: 10px;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .owner-dashboard-room-image-input {
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .owner-dashboard-delete-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+  }
+  
+  .owner-dashboard-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+  }
+  
+  .owner-dashboard-modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .owner-dashboard-modal-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+  
+  .owner-dashboard-modal-text {
+    margin-bottom: 20px;
+  }
+  
+  .owner-dashboard-modal-footer button {
+    width: 48%;
+  }
+  
+  .owner-dashboard-message-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  .owner-dashboard-alert-message {
+    width: 300px;
+    text-align: center;
+  }
+ 
+  /* repair styles */
+  .repair-card:hover {
+    transform: scale(1.05); /* Slightly enlarge the card */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a shadow for a floating effect */
+  }
+
+  /* Hover effect for repair cards (optional, to enlarge slightly on hover) */
+.repair-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .repair-card:hover {
+    transform: scale(1.05); /* Slightly enlarge the card on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a shadow for a floating effect */
+  }
+  
+  .repair-images {
+    margin-top: 10px;
+    width: 100%;
+    background-color: #0056b3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .repair-images img {
+    margin: 0 auto;
+    max-height: 100px;
+  }
+  .image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .image-item {
+    width: 100%;
+    max-width: 200px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 5px;
+  }
+  
+  .repair-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }

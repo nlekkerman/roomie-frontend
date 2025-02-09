@@ -222,6 +222,9 @@ const OwnersDashboard = () => {
       .then(response => response.json())
       .then(updatedProperty => {
         setMessage({ text: "Room image updated successfully!", type: "success" });
+        setTimeout(() => {
+          setMessage(null);
+        }, 1000); // 2000 milliseconds = 2 seconds
         setImageUploading(false); // Stop uploading state
       })
       .catch(error => {
@@ -230,29 +233,19 @@ const OwnersDashboard = () => {
       });
   };
 
-  const extractPublicIdFromUrl = (url) => {
-    const regex = /https?:\/\/res\.cloudinary\.com\/[a-z0-9]+\/image\/upload\/v\d+\/([a-zA-Z0-9_-]+)/;
-    const match = url.match(regex);
-    if (match) {
-      return match[1]; // Return the public ID
-    } else {
-      console.error("Invalid Cloudinary URL", url); // Log the invalid URL for debugging
-      return null; // Return null if regex doesn't match
-    }
-  };
+  
 
   const handleDeleteRoomImage = async (propertyId, cloudinaryImageUrl) => {
     const token = localStorage.getItem("access_token");
 
-    // Extract the Cloudinary public ID from the URL
-    const cloudinaryPublicId = extractPublicIdFromUrl(cloudinaryImageUrl);
-    if (!cloudinaryPublicId) {
+
+    if (!cloudinaryImageUrl) {
       console.error("Invalid Cloudinary URL");
       return;
     }
 
     const formData = new FormData();
-    formData.append("delete_image_public_id", cloudinaryPublicId);  // Send the Cloudinary public ID for deletion
+    formData.append("delete_image_public_id", cloudinaryImageUrl);  // Send the Cloudinary public ID for deletion
 
     try {
       const response = await fetch(`http://127.0.0.1:8000/properties/${propertyId}/`, {
@@ -310,35 +303,118 @@ const OwnersDashboard = () => {
     }
   };
   const handleAddImageClick = async (propertyId, imageFile, description) => {
+    console.log("🚀 Upload process started...");
+
     if (!propertyId) {
-      console.error("Property ID is missing!");
-      return;
+        console.error("❌ Property ID is missing!");
+        return;
     }
 
+    if (!imageFile) {
+        console.error("❌ No image file selected!");
+        return;
+    }
+
+    if (!description) {
+        console.warn("⚠️ No description provided. Defaulting to an empty string.");
+    }
+
+    console.log("🔄 Preparing FormData...");
     const formData = new FormData();
-    formData.append('property', propertyId); // Ensure property ID is added
-    formData.append('image', imageFile);
-    formData.append('description', description);
+    formData.append("property_id", propertyId);
+    formData.append("image", imageFile);
+    formData.append("description", description || ""); // Ensure description is never undefined
+
+    console.log("📝 FORM DATA ENTRIES:");
+    for (let [key, value] of formData.entries()) {
+        console.log(`   ${key}:`, value);
+    }
+
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        console.error("❌ No access token found in localStorage! User may not be authenticated.");
+        return;
+    }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/upload-room-image/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: formData,
-      });
+        console.log("🌍 Sending request to backend...");
+        const response = await fetch("http://127.0.0.1:8000/upload-room-image/", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`, // No 'Content-Type', as FormData sets it automatically
+            },
+            body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error('Image upload failed');
-      }
+        console.log(`📡 Response status: ${response.status}`);
 
-      const responseData = await response.json();
-      console.log('Room image uploaded successfully:', responseData);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ Image upload failed. Status: ${response.status}, Response: ${errorText}`);
+            return;
+        }
+
+        const responseData = await response.json();
+        console.log("✅ Room image uploaded successfully:", responseData);
+
+        if (!responseData.image_url) {
+            console.error("❌ Response does not contain 'image_url'! Backend may not be returning it.");
+            return;
+        }
+
+        // Update the properties state with the new room image
+        setProperties((prevProperties) =>
+            prevProperties.map((property) =>
+                property.id === propertyId
+                    ? {
+                          ...property,
+                          room_images: [
+                              ...property.room_images,
+                              {
+                                  image: responseData.image_url, // Ensure correct field is used
+                                  description: description || "",
+                              },
+                          ],
+                      }
+                    : property
+            )
+        );
+
+        console.log("✅ State updated with new image.");
+        await fetchUpdatedProperty(propertyId);
+        
+        // Reset UI
+        setIsFormVisible(false);
+        setImageFile(null);
+        setDescription("");
     } catch (error) {
-      console.error('Error uploading image:', error);
+        console.error("❌ Error uploading image:", error);
     }
-  };
+};
+
+  const fetchUpdatedProperty = async (propertyId) => {
+    console.log("🔄 Fetching updated property data...");
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/properties/${propertyId}/`);
+        
+        if (!response.ok) {
+            console.error("❌ Failed to fetch updated property data.");
+            return;
+        }
+
+        const updatedProperty = await response.json();
+        console.log("✅ Updated property data:", updatedProperty);
+
+        setProperties((prevProperties) =>
+            prevProperties.map((property) =>
+                property.id === propertyId ? updatedProperty : property
+            )
+        );
+    } catch (error) {
+        console.error("❌ Error fetching updated property data:", error);
+    }
+};
 
 
 
@@ -452,7 +528,7 @@ const OwnersDashboard = () => {
 
                       <div className="position-relative bg-warning mb-5 p-2">
 
-                        <Card.Img variant="bottom" src={roomImage.image} alt={`Room Image ${index + 1}`} />
+                        <Card.Img variant="bottom" src={roomImage.image_url} alt={`Room Image ${index + 1}`} />
                         {activeRoomImageIndex === index && editingFields[property.id] === 'room_images' && (
                           <>
                             <input

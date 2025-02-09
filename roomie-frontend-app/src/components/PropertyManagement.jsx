@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/PagesStyles.css';
 
 const PropertyManagement = () => {
   const [properties, setProperties] = useState([]);
@@ -6,8 +7,8 @@ const PropertyManagement = () => {
   const [ownerUsername, setOwnerUsername] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false); // Modal visibility state
 
-  // Fetch all properties
   useEffect(() => {
     fetch('http://127.0.0.1:8000/properties/')
       .then((response) => response.json())
@@ -21,7 +22,6 @@ const PropertyManagement = () => {
       });
   }, []);
 
-  // Fetch selected property details, including tenants
   const handleSelectProperty = (propertyId) => {
     setSelectedProperty(null); // Reset selected property if already selected
     setLoading(true);
@@ -31,6 +31,7 @@ const PropertyManagement = () => {
       .then((data) => {
         setSelectedProperty(data);
         setLoading(false);
+        setShowModal(true); // Open the modal when property is selected
       })
       .catch((error) => {
         setError(error);
@@ -41,82 +42,102 @@ const PropertyManagement = () => {
   useEffect(() => {
     const fetchOwnerUsername = () => {
       if (selectedProperty && selectedProperty.owner_username) {
-        console.log('Owner username:', selectedProperty.owner_username);  // Directly use the username from the property
-        setOwnerUsername(selectedProperty.owner_username);  // Set the owner username from the property data
+        setOwnerUsername(selectedProperty.owner_username);
       }
     };
 
     fetchOwnerUsername();
   }, [selectedProperty]);
 
-  // Handle loading and errors
   if (loading && !selectedProperty) return <div className="text-center">Loading...</div>;
   if (error) return <div className="alert alert-danger text-center">Error: {error.message}</div>;
 
-  return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-4">Properties</h1>
+  const closeModal = () => {
+    setShowModal(false); // Close modal
+  };
 
-      <div className="row">
+  return (
+    <div className="property-container">
+      <h1 className="heading">Properties</h1>
+
+      <div className="property-content">
         {/* Left Column: List of Properties */}
-        <div className="col-md-4 bg-primary">
-          <ul className="list-group">
+        <div className="property-list-container">
+          <ul className="property-list">
             {properties.map((property) => (
               <li
                 key={property.id}
-                className="list-group-item list-group-item-action d-flex align-items-center"
+                className="property-list-item"
                 onClick={() => handleSelectProperty(property.id)}
-                style={{ cursor: 'pointer' }}
               >
-                {/* ✅ Display Property Image Next to Address */}
-                {property.main_image && (
-                  <img
-                    src={property.main_image}
-                    alt="Property Thumbnail"
-                    className="me-3"
-                    style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "8px" }}
-                  />
-                )}
+                <div className="property-address">
+                  <div>{property.street}, {property.town}, {property.county}, {property.country}</div>
+                </div>
 
-                {/* Property Address */}
-                <div>
-                  {property.street}, {property.town}, {property.county}, {property.country}
+                <div className="property-card">
+                  <div className="property-image-container">
+                    {property.main_image ? (
+                      <img
+                        src={property.main_image}
+                        alt="Property Thumbnail"
+                        className="property-image-img"
+                      />
+                    ) : (
+                      <div className="property-image-placeholder">A</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="property-rating">
+                  <strong>Rating:</strong> {property.property_rating}
+                </div>
+
+                <div className="property-room-capacity">
+                  <strong>Capacity:</strong> {property.room_capacity}
                 </div>
               </li>
             ))}
           </ul>
         </div>
+      </div>
 
-        {/* Right Column: Property Details */}
-        {selectedProperty && (
-          <div className="col-md-8">
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={closeModal}>X</button>
+
             <h2>Property Details</h2>
-            <div className="card mb-4">
-              <div className="card-body">
-                {selectedProperty.main_image && (
+            <div className="property-detail-card">
+              <div className="property-detail-body">
+                {selectedProperty.main_image ? (
                   <img
                     src={selectedProperty.main_image}
                     alt="Property Main Image"
-                    className="img-fluid mb-3"
-                    style={{ width: "100%", height: "300px", objectFit: "cover", borderRadius: "8px" }}
+                    className="property-detail-image"
                   />
+                ) : (
+                  <div className="property-detail-placeholder" />
                 )}
-                <h5 className="card-title">{selectedProperty.street}, {selectedProperty.town}, {selectedProperty.air_code}</h5>
 
-                <p className="card-text"><strong>Owner:</strong> {ownerUsername || 'Loading...'}</p>
-                <p className="card-text"><strong>Description:</strong> {selectedProperty.description || 'No description available'}</p>
-                <p className="card-text"><strong>Property Rating:</strong> {selectedProperty.property_rating}</p>
-                <p className="card-text"><strong>Room Capacity:</strong> {selectedProperty.room_capacity}</p>
-                <p className="card-text"><strong>People Capacity:</strong> {selectedProperty.people_capacity}</p>
-                <p className="card-text"><strong>Rent Amount:</strong> ${selectedProperty.rent_amount}</p>
-                <p className="card-text"><strong>Deposit Amount:</strong> ${selectedProperty.deposit_amount}</p>
-                <p className="card-text"><strong>Property Supervisor:</strong> {selectedProperty.property_supervisor_name || 'N/A'}</p>
-                {/* Display All Current Tenants */}
+                <h5 className="property-title">
+                  {selectedProperty.street}, {selectedProperty.town}, {selectedProperty.air_code}
+                </h5>
+
+                <p><strong>Owner:</strong> {ownerUsername || 'Loading...'}</p>
+                <p><strong>Description:</strong> {selectedProperty.description || 'No description available'}</p>
+                <p><strong>Property Rating:</strong> {selectedProperty.property_rating}</p>
+                <p><strong>Room Capacity:</strong> {selectedProperty.room_capacity}</p>
+                <p><strong>People Capacity:</strong> {selectedProperty.people_capacity}</p>
+                <p><strong>Rent Amount:</strong> ${selectedProperty.rent_amount}</p>
+                <p><strong>Deposit Amount:</strong> ${selectedProperty.deposit_amount}</p>
+                <p><strong>Property Supervisor:</strong> {selectedProperty.property_supervisor_name || 'N/A'}</p>
+
                 <h5>Current Tenants</h5>
                 {selectedProperty.all_current_tenant.length > 0 ? (
-                  <ul className="list-group">
+                  <ul className="tenant-list">
                     {selectedProperty.all_current_tenant.map((tenantRecord) => (
-                      <li key={tenantRecord.id} className="list-group-item">
+                      <li key={tenantRecord.id} className="tenant-item">
                         {tenantRecord.tenant}
                       </li>
                     ))}
@@ -125,20 +146,20 @@ const PropertyManagement = () => {
                   <p>No current tenants</p>
                 )}
 
-                {/* Display Tenant History */}
                 <h5>Tenant History</h5>
-                <ul className="list-group">
-                  {selectedProperty.tenant_history && selectedProperty.tenant_history.map((tenantRecord) => (
-                    <li key={tenantRecord.id} className="list-group-item">
-                      {tenantRecord.tenant} ({tenantRecord.start_date} - {tenantRecord.end_date || 'Present'})
-                    </li>
-                  ))}
+                <ul className="tenant-history-list">
+                  {selectedProperty.tenant_history &&
+                    selectedProperty.tenant_history.map((tenantRecord) => (
+                      <li key={tenantRecord.id} className="tenant-history-item">
+                        {tenantRecord.tenant} ({tenantRecord.start_date} - {tenantRecord.end_date || 'Present'})
+                      </li>
+                    ))}
                 </ul>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

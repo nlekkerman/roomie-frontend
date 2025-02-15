@@ -8,7 +8,15 @@ body{
     background-position: center;
     background-repeat: no-repeat;
   }
-
+  #root {
+    min-width: 100vw;
+    min-height: 100vh;
+    display: flex;         /* Flexbox to handle content */
+    flex-direction: column; /* Stack child elements vertically */
+    justify-content: center; /* Align items in the center vertically */
+    align-items: center;   /* Align items horizontally */
+    background-color: transparent; /* Set background color or any image */
+  }
 .home-container {
     min-width: 100vw;
     min-height: 100vh;
@@ -565,7 +573,19 @@ body{
 }
 /*OWNER DASHBOARD STYLES */
 
+.notification-banner {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
 
+.notification-banner:hover {
+  background-color: #f5c6cb;
+}
 /* General container */
 .owner-dashboard-container {
     margin-top: 80px;
@@ -592,12 +612,18 @@ body{
   
   .owner-dashboard-col {
     margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
   }
   
   .owner-dashboard-card {
     border-radius: 15px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
- width: 100%;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    color: white !important;
+
   }
   
   .owner-dashboard-card-body {
@@ -608,6 +634,7 @@ body{
   .owner-dashboard-card-img-container {
     position: relative;
     margin-bottom: 20px;
+    max-width: 19em;
   }
   
 
@@ -818,3 +845,37 @@ body{
     background-color: rgba(0, 0, 0, 0.9) !important;
     color: white !important;
   }
+
+  /*USER DASHBOARD*/
+
+.dashboard-container{
+  background-color: rgba(0, 0, 0, 0.5);
+  min-width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+}
+.dashboard-user-info-container{
+  max-width: 1200px;
+  border: 1px solid white;
+  padding: 0.4em;
+  margin: 0 auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+.dashboard-card{
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+}
+
+.create-property-dashboard-button-container{
+  background-color: rgba(255, 2, 2, 0.5);
+  padding: 0.4em;
+}
+.dashboard-image{
+
+  margin-top: 1em;
+}

@@ -8,7 +8,7 @@ const Logout = () => {
     // Clear JWT tokens from localStorage
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-
+    
     // Redirect to home page after successful logout
     navigate("/home");
     window.location.reload();
@@ -26,14 +26,14 @@ const Logout = () => {
       <div className="space-x-4">
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-md"
+          className="bg-success text-white px-4 py-2 rounded-md"
         >
           Yes, Log Out
         </button>
 
         <button
           onClick={handleCancel}
-          className="bg-gray-500 text-white px-4 py-2 rounded-md"
+          className="bg-danger text-white px-4 py-2 rounded-md"
         >
           Cancel
         </button>

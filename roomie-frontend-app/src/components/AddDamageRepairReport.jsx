@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 
 const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
     const [description, setDescription] = useState("");
-    const [repairImages, setRepairImages] = useState([]); // To store selected images
+    const [repairImages, setRepairImages] = useState([]);
     const [error, setError] = useState(null);
-    const [property, setProperty] = useState(""); // Property ID
-    const [address, setAddress] = useState(""); // Full address
-    const [username, setUsername] = useState(""); // Full name of tenant
-    const [errorMessage, setErrorMessage] = useState(""); // Error messages
+    const [property, setProperty] = useState("");
+    const [address, setAddress] = useState("");
+    const [username, setUsername] = useState("");
+    const [errorMessage, setErrorMessage] = useState(""); 
     const token = localStorage.getItem("access_token");
+    const [propertyId, setPropertyId] = useState(null);
+    const [message, setMessage] = useState(null); 
 
     useEffect(() => {
         const fetchUserProperty = async () => {
@@ -18,35 +20,60 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                
-                // Check if the response is successful
+    
                 if (response.ok) {
                     const data = await response.json(); // Read the response body once here
-                    
-                    console.log("Fetched User Data:", data);
+                    console.log("Fetched User Data:", data);  // Debugging
     
-                    if (data) {
-                        setUsername(`${data.first_name} ${data.last_name}`); // Set full name
-                        setAddress(data.current_address.full_address || "No address found"); // Set address string
-                        if (data.current_address.property_id) {
-                            setProperty(data.current_address.property_id); // Set property ID from current address
+                    // Set the username if available
+                    setUsername(`${data.first_name} ${data.last_name}`);
+    
+                    // Handle current address
+                    if (data.current_address) {
+                        setAddress(data.current_address); // Set address from current_address
+                        console.log("Current Address:", data.current_address); // Debugging
+    
+                        if (data.property_id) {
+                            setPropertyId(data.property_id); // Set property_id from current address
+                            setProperty(data.property_id); // Ensure property is set for form
+                            console.log("Property ID from current_address:", data.property_id); // Debugging
                         } else {
-                            setErrorMessage("No property ID associated with the tenant.");
+                            setPropertyId(null);
+                            setProperty(null); // Clear form if no property_id
+                            console.log("No property_id found in current_address.");
                         }
+                    } else {
+                        setErrorMessage("No current address associated with the tenant.");
                     }
+    
+                    // Handle address history
+                    if (data.address_history && data.address_history.length > 0) {
+                        const currentAddressHistory = data.address_history[0];  // Assuming first address is current
+                        setAddress(currentAddressHistory.address);  // Set address from address_history
+                        console.log("Address History:", currentAddressHistory); // Debugging
+    
+                        // Ensure property_id exists in address history
+                        if (currentAddressHistory.address.propertyId) {
+                            setPropertyId(currentAddressHistory.address.property_id);
+                            setProperty(currentAddressHistory.address.propertyId); // Set property from history
+                            console.log("Property ID from address_history:", currentAddressHistory.address.property_id); // Debugging
+                        }
+                    } else {
+                        setErrorMessage("No address history found for the tenant.");
+                    }
+    
                 } else {
                     setErrorMessage("Failed to fetch tenant details. Status: " + response.status);
                 }
             } catch (err) {
                 setErrorMessage("Failed to fetch tenant details.");
-                console.error(err); // Log the error for debugging
+                console.error(err); // Log error for debugging
             }
         };
     
         fetchUserProperty();
-    }, [token]); // Ensure token dependency is tracked
+    }, [token]);
     
-
     const handleImageChange = (e) => {
         setRepairImages(e.target.files);
     };
@@ -61,6 +88,14 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
             setErrorMessage("Property is required.");
             return;
         }
+        if (!description) {
+            setErrorMessage("Description is required.");
+            return;
+        }
+        if (repairImages.length === 0) {
+            setErrorMessage("At least one repair image is required.");
+            return;
+        }
 
         const formData = new FormData();
         formData.append("description", description);
@@ -70,6 +105,7 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
         Array.from(repairImages).forEach((image) => {
             formData.append("repair_images", image); // Assuming the backend expects 'repair_images' as key
         });
+        
         try {
             const response = await fetch("http://127.0.0.1:8000/damage-reports/", {
                 method: "POST",
@@ -78,7 +114,6 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
                 },
                 body: formData,
             });
-            
 
             if (!response.ok) {
                 throw new Error("Failed to submit report");
@@ -86,9 +121,17 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
 
             const newReport = await response.json();
             onReportAdded(newReport); // Notify parent to refresh the list
+            setMessage({ text: "Repair request sent successfully!", type: "success" });
+            setTimeout(() => {
+              setMessage(null);
+            }, 1000); // 2000 milliseconds = 2 seconds
             onClose(); // Close the modal or form
         } catch (err) {
             setError(err.message);
+            setMessage({ text: "Yor Repair request in not sent this time, please try again!", type: "success" });
+            setTimeout(() => {
+              setMessage(null);
+            }, 1000); // 2000 milliseconds = 2 seconds
         }
     };
 

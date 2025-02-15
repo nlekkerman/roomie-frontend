@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Spinner, Alert, Form, Modal } from 'react-bootstrap';
-
+import SetPaymentComponent from "../components/SetPaymentComponent";
+import { useNavigate } from "react-router-dom";
 const OwnersDashboard = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,12 @@ const OwnersDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState(null);
+  const [notifications, setNotifications] = useState([]); 
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const navigate = useNavigate();
+
+
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -50,8 +57,9 @@ const OwnersDashboard = () => {
 
 
     };
-
+   
     fetchProperties();
+    fetchNotifications();
     // Fetch repair requests after fetching properties
     const fetchRepairRequests = async () => {
       const token = localStorage.getItem("access_token");
@@ -87,14 +95,74 @@ const OwnersDashboard = () => {
 
     // Fetch repair requests
     fetchRepairRequests();
-  }, []);
 
+    
+  }, []);
+ 
   const toggleRoomImages = (propertyId) => {
     setShowRoomImages(prevState => ({
       ...prevState,
       [propertyId]: !prevState[propertyId],
     }));
   };
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setError("No authentication token found");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://127.0.0.1:8000/notifications/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch notifications");
+      }
+  
+      const data = await response.json();
+      setNotifications(data);
+  
+      // Show banner only if there are unread notifications
+      setHasUnreadNotifications(data.some(notification => !notification.is_read));
+    } catch (err) {
+      setError("Failed to fetch notifications");
+    }
+  };
+  
+
+  const markNotificationsAsRead = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setError("No authentication token found");
+      return;
+    }
+  
+    try {
+      await fetch("http://127.0.0.1:8000/notifications/mark_as_read/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+   
+    } catch (err) {
+      console.error("Error marking notifications as read:", err);
+    }
+  };
+
+  const handleNotificationClick = () => {
+    navigate("/notifications");
+    markNotificationsAsRead(); 
+  };
+
+  // Check if there are unread notifications
+  const hasNotifications = notifications.length > 0;
 
   const handleRequestClick = (request) => {
     setSelectedRequest(request);
@@ -529,9 +597,7 @@ const OwnersDashboard = () => {
   const handleBackToList = () => {
     setSelectedPropertyId(null); // Reset to show property list
   };
-
-
-
+ 
   if (loading) {
     return <div className="text-center"><Spinner animation="border" variant="primary" /></div>;
   }
@@ -539,10 +605,16 @@ const OwnersDashboard = () => {
   if (error) {
     return <Alert variant="danger">{error}</Alert>;
   }
+
+  
   return (
     <div className="owner-dashboard-container mt-5">
       <h2 className="owner-dashboard-title text-center mb-4">Owner's Dashboard</h2>
-
+     {hasNotifications && (
+        <div className="notification-banner" onClick={handleNotificationClick}>
+          You have new notifications!
+        </div>
+      )}
       {message && <Alert variant={message.type} className="owner-dashboard-alert">{message.text}</Alert>}
 
       {/* Display the list of properties if no property is selected */}
@@ -582,6 +654,9 @@ const OwnersDashboard = () => {
             .filter((property) => property.id === selectedPropertyId)
             .map((property) => (
               <Col key={property.id} sm={12} md={12} lg={12} className="owner-dashboard-col">
+
+                <div className="addTenant">hjasdbaksjdbajhsbd</div>
+
                 <Card className="owner-dashboard-card mb-4">
                   <Card.Body className="owner-dashboard-card-body">
                     {/* Back Button to return to the list of properties */}
@@ -849,6 +924,8 @@ const OwnersDashboard = () => {
           </Modal.Footer>
         </Modal>
       </div>
+      <div className="div-test"><SetPaymentComponent /></div>
+
     </div>
 
   );

@@ -12,6 +12,9 @@ import DamageRepairReports from './pages/DamageRepairReports';
 import AddDamageRepairReport from './components/AddDamageRepairReport';
 import OwnersDashboard from './pages/OwnersDashboard';
 import CreateProperty from './components/CreateProperty';
+import CreateCustomUser from './components/CreateCustomUser';
+import Notifications from './components/Notifications';
+
 
 function App() {
   return (
@@ -32,6 +35,8 @@ function App() {
         <Route path="/damage-repair-reports/add" element={<AddDamageRepairReport />} />
         <Route path="/owners-dashboard" element={<OwnersDashboard />} /> 
         <Route path="/create-property" element={<CreateProperty />} />
+        <Route path="/create-custom-profile" element={<CreateCustomUser />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
     </Router>
   );

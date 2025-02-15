@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Image,Button } from 'react-bootstrap';
+import { Container, Card, Button,Image } from 'react-bootstrap';
 
 const Dashboard = () => {
     const [userData, setUserData] = useState(null);
+    const [defaultUserData, setDefaultUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        // Fetch the user data from the /me/ API
         const fetchUserData = async () => {
             const token = localStorage.getItem('access_token');
-
             if (!token) {
                 setError('No token found. Please log in.');
                 setLoading(false);
@@ -17,6 +18,7 @@ const Dashboard = () => {
             }
 
             try {
+                // Fetch data from /me/ to get user info and status
                 const response = await fetch('http://127.0.0.1:8000/me/', {
                     method: 'GET',
                     headers: {
@@ -31,8 +33,28 @@ const Dashboard = () => {
                 }
 
                 const data = await response.json();
-                console.log(data)
-                setUserData(data);
+                console.log(data);
+                setUserData(data);  // Store the user data
+
+                // If user is a default user, fetch default user data from another endpoint
+                if (data.status === "default_user") {
+                    const defaultUserResponse = await fetch('http://127.0.0.1:8000/default-user/', {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!defaultUserResponse.ok) {
+                        const errorData = await defaultUserResponse.json();
+                        throw new Error(errorData.detail || 'Failed to fetch default user data');
+                    }
+
+                    const defaultData = await defaultUserResponse.json();
+                    setDefaultUserData(defaultData); // Store default user data
+                }
+
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -47,28 +69,47 @@ const Dashboard = () => {
     if (error) return <div>Error: {error}</div>;
     if (!userData) return <div>No user data available.</div>;
 
-    const {
-        first_name,
+    // Destructure the user data (Django's default user fields)
+    const {  first_name,
         last_name,
         email,
         phone_number,
         user_rating_in_app,
-        address,
+        current_address,
         address_history,
         profile_image,
-    } = userData;
+} = userData;
 
     return (
+        <Container className="mt-5 dashboard-container " >
+     
 
-        <Container className="mt-5">
+            {/* Display for Default User */}
+            {status === "default_user" ? (
+                <div className="text-center dashboard-user-info-container">
+                    <Card className="mb-4">
+                        <Card.Body>
+                            <Card.Title>User Information</Card.Title>
+                            <Card.Text><strong>Full Name:</strong> {defaultUserData.first_name} {defaultUserData.last_name}</Card.Text>
+                            <Card.Text><strong>Email:</strong> {defaultUserData.email}</Card.Text>
+                        </Card.Body>
+                    </Card>
+                    <Button variant="primary" href="/create-custom-profile">
+                        Complete Profile
+                    </Button>
+                </div>
+            ) : (
+                // Display user info for custom users (from /me/ API)
+                <div className="text-center dashboard-user-info-container">
+            
             <h2 className="text-center mb-4">Dashboard</h2>
             {/* New Section: Property Profile */}
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center create-property-dashboard-button-container">
                 <h4>Are you the owner of a property? If so, create a property profile</h4>
                 <Button variant="primary" size="lg" href="/create-property">Create Property</Button>
             </div>
             {/* Profile Image */}
-            <div className="text-center mb-4">
+            <div className="text-center mb-4 dashboard-image">
                 {profile_image ? (
                     <Image
                         src={profile_image}
@@ -87,7 +128,7 @@ const Dashboard = () => {
             </div>
 
             {/* User Info Card */}
-            <Card className="mb-4">
+            <Card className="mb-4 dashboard-card">
                 <Card.Body>
                     <Card.Title>User Information</Card.Title>
                     <Card.Text><strong>Full Name:</strong> {first_name} {last_name}</Card.Text>
@@ -98,15 +139,15 @@ const Dashboard = () => {
             </Card>
 
             {/* Address Section */}
-            <Card className="mb-4">
+            <Card className="mb-4 dashboard-card">
                 <Card.Header>Current Address</Card.Header>
                 <Card.Body>
-                    <Card.Text>{address || "No current address set"}</Card.Text>
+                    <Card.Text className='text-warning'>{current_address || "No current address set"}</Card.Text>
                 </Card.Body>
             </Card>
 
             {/* Address History */}
-            <Card>
+            <Card className="mb-4 dashboard-card">
                 <Card.Header>Address History</Card.Header>
                 <Card.Body>
                     {address_history?.length > 0 ? (
@@ -125,6 +166,13 @@ const Dashboard = () => {
                     )}
                 </Card.Body>
             </Card>
+       
+
+                    <Button variant="primary" href="/edit-profile">
+                        Edit Profile
+                    </Button>
+                </div>
+            )}
         </Container>
     );
 };

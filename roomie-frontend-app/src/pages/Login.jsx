@@ -45,53 +45,65 @@ const Login = () => {
     }
 };
 
-
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-md">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
+    <div className="container-fluid vw-100 d-flex justify-content-center align-items-center">
+      <div className="row justify-content-center w-100">
+        <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h1 className="text-center mb-4">Login</h1>
 
-      {error && <p className="text-red-500 danger">{error}</p>}
+              {error && <div className="alert alert-danger">{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-semibold text-gray-700">Username</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={loginData.username}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="username" className="form-label">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={loginData.username}
+                    onChange={handleChange}
+                    required
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">Password</label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={loginData.password}
+                    onChange={handleChange}
+                    required
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="mb-3 d-flex flex-column align-items-center">
+  <button
+    type="submit"
+    className="btn btn-primary w-100 mb-2"
+    disabled={loading}
+  >
+    {loading ? "Logging in..." : "Login"}
+  </button>
+  <Link to="/forgot-password" className="text-decoration-none">
+    Forgot Password?
+  </Link>
+</div>
+
+              </form>
+
+              <p className="text-center mt-3">
+                Don't have an account? <Link to="/register" className="text-decoration-none">Register here</Link>
+              </p>
+            </div>
+          </div>
         </div>
-
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-semibold text-gray-700">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={loginData.password}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 w-full rounded-md"
-          disabled={loading}
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-
-      {/* Link to register if the user doesn't have an account */}
-      <p className="mt-4 text-center">
-        Don't have an account? <Link to="/register" className="text-blue-500">Register here</Link>
-      </p>
+      </div>
     </div>
   );
 };

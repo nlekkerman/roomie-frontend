@@ -157,7 +157,7 @@ const OwnersDashboard = () => {
   };
 
   const handleNotificationClick = () => {
-    navigate("/notifications");
+    navigate("/tenancy-request-component");
     markNotificationsAsRead(); 
   };
 
@@ -610,6 +610,11 @@ const OwnersDashboard = () => {
   return (
     <div className="owner-dashboard-container mt-5">
       <h2 className="owner-dashboard-title text-center mb-4">Owner's Dashboard</h2>
+     {/* Button to Navigate to Notifications Page */}
+     <Button variant="primary" onClick={() => navigate("/tenancy-request-component")}>
+                        Go to Notifications
+                    </Button>
+     
      {hasNotifications && (
         <div className="notification-banner" onClick={handleNotificationClick}>
           You have new notifications!

@@ -13,7 +13,7 @@ import AddDamageRepairReport from './components/AddDamageRepairReport';
 import OwnersDashboard from './pages/OwnersDashboard';
 import CreateProperty from './components/CreateProperty';
 import CreateCustomUser from './components/CreateCustomUser';
-import Notifications from './components/Notifications';
+import TenancyRequestComponent from './components/TenancyRequestComponent';
 
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
         <Route path="/owners-dashboard" element={<OwnersDashboard />} /> 
         <Route path="/create-property" element={<CreateProperty />} />
         <Route path="/create-custom-profile" element={<CreateCustomUser />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/tenancy-request-component" element={<TenancyRequestComponent />} />
       </Routes>
     </Router>
   );

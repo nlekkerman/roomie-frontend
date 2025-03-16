@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom"; // Just Link for navigation
+import React, { useState, useEffect, useContext } from "react"; // <-- ADDED: useContext import
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext"; // <-- ADDED: Import AuthContext
 
 const Navbar = () => {
-  const isAuthenticated = !!localStorage.getItem("access_token"); // Check if the user is logged in by checking for JWT token
+  const { auth } = useContext(AuthContext); // <-- ADDED: Get auth state from context
+  const isAuthenticated = auth.isAuthenticated; // <-- CHANGED: Use auth state instead of localStorage
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isOwner, setIsOwner] = useState(false); // Track if the logged-in user is an owner
+  const [isOwner, setIsOwner] = useState(false);
 
-  const token = localStorage.getItem("access_token");
+  const token = auth.accessToken; // <-- CHANGED: Use auth.accessToken instead of localStorage.getItem
 
   useEffect(() => {
     const fetchUserProperty = async () => {
@@ -24,7 +26,7 @@ const Navbar = () => {
           
           // Check if user is an owner by comparing logged-in user with owner username
           if (data && data.owner_username === data.username) {
-            setIsOwner(true); // Set isOwner to true if the logged-in user is an owner
+            setIsOwner(true);
           }
         }
       } catch (err) {
@@ -33,7 +35,7 @@ const Navbar = () => {
     };
 
     fetchUserProperty();
-  }, [token]);
+  }, [token]); // <-- CHANGED: Dependency now uses token from AuthContext
 
   const toggleMobileMenu = () => setMobileMenuOpen(!isMobileMenuOpen);
 

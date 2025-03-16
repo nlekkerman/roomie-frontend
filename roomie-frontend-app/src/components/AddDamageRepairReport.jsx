@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
+    const { auth, refreshToken, logout } = useContext(AuthContext);
     const [description, setDescription] = useState("");
     const [repairImages, setRepairImages] = useState([]);
     const [error, setError] = useState(null);
@@ -8,13 +10,44 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
     const [address, setAddress] = useState("");
     const [username, setUsername] = useState("");
     const [errorMessage, setErrorMessage] = useState(""); 
-    const token = localStorage.getItem("access_token");
+    // Check if token is expired before making the request
+    let token = auth.accessToken;
+    
     const [propertyId, setPropertyId] = useState(null);
     const [message, setMessage] = useState(null); 
+    
+
+    
+     useEffect(() => {
+            if (!auth.accessToken) {
+                setError("No authentication token found");
+            }
+        }, [auth]);
+    
+        const isTokenExpired = async (token) => {
+            const tokenParts = token.split('.');
+            if (tokenParts.length !== 3) return true; // Invalid token format
+    
+            const payload = JSON.parse(atob(tokenParts[1])); // Decode payload
+            const exp = payload.exp;
+            const currentTime = Math.floor(Date.now() / 1000);
+    
+            return exp < currentTime;
+        };
 
     useEffect(() => {
         const fetchUserProperty = async () => {
             try {
+
+                // Check if token is expired before making the request
+            let token = auth.accessToken;
+            const isExpired = await isTokenExpired(token);
+            if (isExpired) {
+                token = await refreshToken();
+                if (!token) {
+                    throw new Error("Failed to refresh token. Please log in.");
+                }
+            }
                 const response = await fetch("http://127.0.0.1:8000/me/", {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -107,6 +140,15 @@ const AddDamageRepairReport = ({ onClose, onReportAdded }) => {
         });
         
         try {
+            // Check if token is expired before making the request
+            let token = auth.accessToken;
+            const isExpired = await isTokenExpired(token);
+            if (isExpired) {
+                token = await refreshToken();
+                if (!token) {
+                    throw new Error("Failed to refresh token. Please log in.");
+                }
+            }
             const response = await fetch("http://127.0.0.1:8000/damage-reports/", {
                 method: "POST",
                 headers: {

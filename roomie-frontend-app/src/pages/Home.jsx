@@ -1,7 +1,9 @@
 import React from "react";
 import HomePropertyComponent from "../components/HomePropertyComponent"; // Import the PropertyManagement component
-
+import { AuthContext } from '../context/AuthContext'; 
 const Home = () => {
+
+  
   console.log(localStorage.getItem("access_token"))
   return (
     <div className="home-container">

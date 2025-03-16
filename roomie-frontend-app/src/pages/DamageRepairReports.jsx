@@ -1,22 +1,36 @@
-import React, { useState, useEffect } from "react";
-import AddDamageRepairReport from "../components/AddDamageRepairReport";
+import React, { useState, useEffect, useContext } from "react";
+import { Container, Card, Button, Row, Col, Alert, Modal, Image } from "react-bootstrap";
+import { AuthContext } from "../context/AuthContext";
+import AddDamageRepairReport from "../components/AddDamageRepairReport"; // Assuming you have this component
 
 const DamageRepairReports = () => {
+    const { auth, refreshToken, logout } = useContext(AuthContext); // Assuming logout function is available in the context
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [token, setToken] = useState("");
-    const [selectedImage, setSelectedImage] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem("access_token");
-        if (storedToken) {
-            setToken(storedToken);
+        if (!auth.accessToken) {
+            setError("No authentication token found");
         }
-    }, []);
+    }, [auth]);
+
+    const isTokenExpired = async (token) => {
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) return true; // Invalid token format
+
+        const payload = JSON.parse(atob(tokenParts[1])); // Decode payload
+        const exp = payload.exp;
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        return exp < currentTime;
+    };
 
     const fetchReports = async () => {
+        let token = auth.accessToken;
+      
         if (!token) {
             setError("No authentication token found");
             return;
@@ -26,7 +40,15 @@ const DamageRepairReports = () => {
         setError(null);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/damage-reports/", {
+            const isExpired = await isTokenExpired(token);
+            if (isExpired) {
+                token = await refreshToken();
+                if (!token) {
+                    throw new Error("Failed to refresh token. Please log in.");
+                }
+            }
+
+            let response = await fetch("http://127.0.0.1:8000/damage-reports/", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -34,14 +56,41 @@ const DamageRepairReports = () => {
                 },
             });
 
-            if (!response.ok) {
+            if (response.ok) {
+                const data = await response.json();
+                setReports(data);
+            } else if (response.status === 401) {
+                // Token is invalid or expired
+                console.log("Token expired or invalid, attempting refresh...");
+                const newToken = await refreshToken();
+
+                if (!newToken) {
+                    setError("Failed to refresh token. Please log in again.");
+                    logout(); // Log out the user if token refresh fails
+                    return;
+                }
+
+                response = await fetch("http://127.0.0.1:8000/damage-reports/", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${newToken}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setReports(data);
+                } else {
+                    setError("Failed to fetch damage repair reports after token refresh.");
+                    logout(); // Log out the user if refresh also fails
+                }
+            } else {
                 throw new Error("Failed to fetch damage repair reports");
             }
-
-            const data = await response.json();
-            setReports(data);
         } catch (err) {
             setError(err.message);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -49,12 +98,13 @@ const DamageRepairReports = () => {
 
     useEffect(() => {
         fetchReports();
-    }, [token]);
+    }, [auth.accessToken]);
 
     return (
-        <div className="container mt-4">
-            <h2 className="mb-4">🛠 Damage Repair Reports</h2>
-            <button className="btn btn-primary mb-3" onClick={() => setShowForm(true)}>+ Add Report</button>
+        <Container className="mt-5">
+            <h2 className="mb-4 text-center">🛠 Damage Repair Reports</h2>
+
+            <Button variant="primary" onClick={() => setShowForm(true)} className="mb-3">+ Add Report</Button>
 
             {showForm && (
                 <AddDamageRepairReport
@@ -70,13 +120,13 @@ const DamageRepairReports = () => {
                     </div>
                 </div>
             ) : error ? (
-                <p className="alert alert-danger">{error}</p>
+                <Alert variant="danger">{error}</Alert>
             ) : reports.length > 0 ? (
-                <div className="row">
+                <Row>
                     {reports.map((report) => (
-                        <div key={report.id} className="col-md-6 col-lg-4 mb-4">
-                            <div className="card">
-                                <div className="card-body">
+                        <Col key={report.id} md={6} lg={4} className="mb-4">
+                            <Card className="shadow-sm">
+                                <Card.Body>
                                     <h5 className="card-title">Repair Request for:</h5>
                                     <p className="text-muted">{report.property_address}</p>
                                     <p><strong>Description:</strong> {report.description}</p>
@@ -94,52 +144,47 @@ const DamageRepairReports = () => {
                                     <p><strong>Resolved At:</strong> {report.resolved_at ? new Date(report.resolved_at).toLocaleString() : "Not Resolved Yet"}</p>
                                     <p><strong>Reported by:</strong> {report.tenant}</p>
 
-                                    {/* Images Section */}
                                     {report.repair_images && report.repair_images.length > 0 ? (
                                         <div>
                                             <h6>🖼 Repair Images:</h6>
-                                            <div className="row">
+                                            <Row>
                                                 {report.repair_images.map((image, index) => (
-                                                    <div key={index} className="col-4 mb-2">
-                                                        <img
+                                                    <Col key={index} xs={4} className="mb-2">
+                                                        <Image
                                                             src={image.image}
                                                             alt={`Repair Image ${index + 1}`}
                                                             className="img-fluid rounded"
                                                             onClick={() => setSelectedImage(image.image)}
                                                             style={{ cursor: "pointer" }}
                                                         />
-                                                    </div>
+                                                    </Col>
                                                 ))}
-                                            </div>
+                                            </Row>
                                         </div>
                                     ) : (
                                         <p className="text-muted">No images available.</p>
                                     )}
-                                </div>
-                            </div>
-                        </div>
+                                </Card.Body>
+                            </Card>
+                        </Col>
                     ))}
-                </div>
+                </Row>
             ) : (
                 <p className="text-center">No damage repair reports found.</p>
             )}
 
             {/* Image Modal */}
             {selectedImage && (
-                <div className="modal fade show d-block" tabIndex="-1" role="dialog" onClick={() => setSelectedImage(null)}>
-                    <div className="modal-dialog modal-dialog-centered" role="document">
-                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-body text-center">
-                                <img src={selectedImage} alt="Full Image" className="img-fluid" />
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setSelectedImage(null)}>Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Modal show={true} onHide={() => setSelectedImage(null)} centered>
+                    <Modal.Body className="text-center">
+                        <Image src={selectedImage} alt="Full Image" fluid />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setSelectedImage(null)}>Close</Button>
+                    </Modal.Footer>
+                </Modal>
             )}
-        </div>
+        </Container>
     );
 };
 

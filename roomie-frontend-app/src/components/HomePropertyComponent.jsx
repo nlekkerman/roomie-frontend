@@ -10,6 +10,7 @@ const HomePropertyComponent = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    
     fetch('http://127.0.0.1:8000/properties/')
       .then((response) => response.json())
       .then((data) => {

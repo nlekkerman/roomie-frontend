@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { Link } from "react-router-dom";  // Import Link component
+import React, { useState, useContext  } from "react";
+import { useNavigate, Link } from "react-router-dom"; 
+import { AuthContext } from '../context/AuthContext';
 
 const Login = () => {
+  const { login } = useContext(AuthContext);
   const [loginData, setLoginData] = useState({ username: "", password: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,31 +20,27 @@ const Login = () => {
     setError(null);
 
     try {
-        const response = await fetch("http://127.0.0.1:8000/accounts/login/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(loginData),
-        });
+      const response = await fetch("http://127.0.0.1:8000/accounts/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData),
+      });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || "Login failed");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Login failed");
+      }
 
-        const data = await response.json();
+      const data = await response.json();
+      login(data);  // Use context to store tokens and update the state
 
-        // Save JWT tokens to localStorage
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
-
-        navigate("/home");  // Redirect to Home
-        window.location.reload();  // ✅ Force a reload to update navbar & state
+      navigate("/home");  // Redirect to Home
     } catch (error) {
-        setError(error.message);
+      setError(error.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   return (
     <div className="container-fluid vw-100 d-flex justify-content-center align-items-center">
